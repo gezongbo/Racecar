@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Launch the racecar -->
+  <include file="$(find racecar_gazebo)/launch/racecar.launch">
+    <arg name="world_name" value="racecar1_1"/>
+  </include>
+  
+  <!-- Launch the built-map -->
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find racecar_gazebo)/map/map_runway2.yaml" />
+
+  <include file="$(find amcl)/examples/amcl_diff.launch" >
+  <!--rosparam file="$(find racecar_gazebo)/config/acml_params.yaml" command="load" /-->
+  </include> 
+
+  <!--Launch the move base with time elastic band-->
+  <param name="/use_sim_time" value="true"/>
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+    <rosparam file="$(find racecar_gazebo)/config/costmap_common_params.yaml" command="load" ns="global_costmap" />
+    <rosparam file="$(find racecar_gazebo)/config/costmap_common_params.yaml" command="load" ns="local_costmap" />
+    <rosparam file="$(find racecar_gazebo)/config/local_costmap_params.yaml" command="load" />
+    <rosparam file="$(find racecar_gazebo)/config/global_costmap_params.yaml" command="load" />
+    <rosparam file="$(find racecar_gazebo)/config/teb_local_planner_params.yaml" command="load" />
+    
+    <param name="base_global_planner" value="global_planner/GlobalPlanner" />
+    <param name="planner_frequency" value="0.01" />
+    <param name="planner_patience" value="5.0" />
+    <!--param name="use_dijkstra" value="false" /-->
+    
+    <param name="base_local_planner" value="teb_local_planner/TebLocalPlannerROS" />
+    <param name="controller_frequency" value="5.0" />
+    <param name="controller_patience" value="15.0" />
+
+    <param name="clearing_rotation_allowed" value="false" />
+    <!--remap from="/cmd_vel" to="/vesc/low_level/ackermann_cmd_mux/input/teleop" /-->
+  </node>
+  
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find racecar_gazebo)/config/racecar_rviz.rviz"/>
+
+  <node pkg="racecar_gazebo" type="many_goal" respawn="false" name="many_goal" output="screen"/>
+  <!--node pkg="racecar_gazebo" type="mini_car_controller" respawn="false" name="mini_car_controller" output="screen"/>
+  <node pkg="racecar_gazebo" type="Pure_Pursuit" respawn="false" name="Pure_Pursuit" output="screen"/-->
+  <!--node pkg="racecar_gazebo" type="findLine" respawn="false" name="findLine" output="screen"/-->
+
+  <!--node pkg="racecar_gazebo" name="path_pursuit_node" type="path_pursuit.py" output="screen"/-->
+
+</launch>
